@@ -1,0 +1,316 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Один день ИИ-РОПа из Lady Stretch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: вертикальная лента дня — слева время, справа сообщение бота в виде карточки чата */
+:root{
+  --bg:#EEF0F5; --paper:#FFFFFF; --ink:#1E2230; --muted:#636A7E; --line:#D9DCE6;
+  --accent:#9B2D63; --accent-soft:#F6E6EE; --chat:#DCE4EF;
+  --good:#1F7A4D; --good-soft:#E3F3EA; --warn:#A6620A; --warn-soft:#FBEFD9; --bad:#B4302B; --bad-soft:#FBE5E3;
+  --f-display:"Unbounded","Manrope",system-ui,sans-serif;
+  --f-body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14161D; --paper:#1F222C; --ink:#E9EBF2; --muted:#9AA0B3; --line:#323645;
+  --accent:#E07AAE; --accent-soft:#3A2230; --chat:#1A1E28;
+  --good:#5FCB92; --good-soft:#1C3328; --warn:#E6A94F; --warn-soft:#3A2D18; --bad:#F07B73; --bad-soft:#3D2120; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14161D; --paper:#1F222C; --ink:#E9EBF2; --muted:#9AA0B3; --line:#323645;
+  --accent:#E07AAE; --accent-soft:#3A2230; --chat:#1A1E28;
+  --good:#5FCB92; --good-soft:#1C3328; --warn:#E6A94F; --warn-soft:#3A2D18; --bad:#F07B73; --bad-soft:#3D2120; color-scheme:dark}
+
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 64px}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:40px}
+header{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,6vw,46px);line-height:1.1;margin:0;text-wrap:balance}
+.lead{font-size:17px;color:var(--muted);max-width:62ch;margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:8px}
+.pill{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--paper)}
+.pill.team{color:var(--accent);border-color:var(--accent)}
+.pill.own{color:var(--ink)}
+.note{font-size:13px;color:var(--muted)}
+
+.day{display:flex;flex-direction:column;gap:28px}
+.slot{display:grid;grid-template-columns:96px minmax(0,1fr);gap:20px;align-items:start}
+.when{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);display:flex;flex-direction:column;gap:6px;padding-top:6px}
+.time{font-family:var(--f-mono);font-size:20px;color:var(--ink)}
+.where{font-size:12px;color:var(--muted);line-height:1.35}
+.where b{color:var(--accent);font-weight:600}
+.what{display:flex;flex-direction:column;gap:10px;min-width:0}
+.what h2{font-family:var(--f-display);font-weight:500;font-size:18px;margin:0;text-wrap:balance}
+.what p.why{margin:0;color:var(--muted);max-width:62ch}
+
+.chat{background:var(--chat);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{background:var(--paper);border-radius:14px 14px 14px 4px;padding:12px 14px;max-width:560px;box-shadow:0 1px 1px rgba(0,0,0,.06);font-size:14.5px;line-height:1.5}
+.msg .from{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:4px}
+.msg p{margin:0}
+.msg p+p{margin-top:8px}
+.msg .sep{color:var(--muted);letter-spacing:-1px;overflow:hidden;white-space:nowrap}
+.msg a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-soft)}
+.msg i{color:var(--muted)}
+.btns{display:flex;flex-direction:column;gap:6px;max-width:560px}
+.btns.row{flex-direction:row;flex-wrap:wrap}
+.btn{background:var(--paper);opacity:.92;border-radius:10px;padding:8px 12px;text-align:center;font-size:13.5px;font-weight:600;color:var(--accent);flex:1}
+
+.tbl{overflow-x:auto;margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--muted);font-size:12px}
+.ok{color:var(--good);font-weight:700}.mid{color:var(--warn);font-weight:700}.low{color:var(--bad);font-weight:700}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:6px}
+.tag.r{background:var(--bad-soft);color:var(--bad)}.tag.o{background:var(--warn-soft);color:var(--warn)}.tag.g{background:var(--good-soft);color:var(--good)}
+
+.summary{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.summary h2{font-family:var(--f-display);font-weight:500;font-size:20px;margin:0}
+.summary table td,.summary table th{white-space:normal;text-align:left}
+.summary td:first-child{font-family:var(--f-mono);font-size:13px;white-space:nowrap}
+footer{font-size:13px;color:var(--muted);text-align:left}
+
+@media (max-width:560px){
+  .slot{grid-template-columns:minmax(0,1fr);gap:10px}
+  .when{position:static;flex-direction:row;align-items:baseline;gap:10px;padding-top:0}
+  .time{font-size:17px}
+}
+</style>
+<style>*{box-sizing:border-box}body{margin:0}</style></head><body>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Отдел продаж в Telegram</div>
+  <h1>Один день ИИ-РОПа из <span style="color:var(--accent)">LADY STRETCH</span></h1>
+  <p class="lead">Бот весь день следит за amoCRM и звонками и пишет команде так, как написал бы руководитель отдела продаж. Ниже по часам показано, что он присылает и кому.</p>
+  <div class="legend">
+    <span class="pill team">в группу продаж — видит команда</span>
+    <span class="pill own">в личку — видит только владелец</span>
+    <span class="pill">в группу «Отчёты»</span>
+  </div>
+</header>
+
+<section class="summary">
+  <p style="margin:0;max-width:62ch">Хороший РОП — это сильная поддержка для студии. Но даже самый опытный руководитель не может весь день следить за каждой заявкой и прослушивать каждый звонок. ИИ-РОП делает это каждый день. Он видит каждую заявку, проверяет звонки по вашему скрипту, подсказывает администраторам, что улучшить, и каждый вечер подводит итоги. Он не болеет, не уходит в отпуск и не увольняется. А решения по-прежнему принимаете вы, только теперь у вас есть все цифры.</p>
+</section>
+
+<section class="day">
+<p class="note" style="margin:0 0 -12px">Все цифры, имена и суммы ниже — примеры.</p>
+
+<!-- 08:15 Разбор звонков -->
+<div class="slot">
+  <div class="when"><span class="time">08:15</span><span class="where"><b>группа продаж</b></span></div>
+  <div class="what">
+    <h2>Разбор вчерашних звонков</h2>
+    <p class="why">Бот слушает звонки по новым заявкам, сверяет со скриптом и выбирает 1–2 пункта, которые упускали чаще всего. К каждому даёт готовую фразу.</p>
+    <div class="chat">
+      <div class="msg"><div class="from">ИИ-РОП</div>
+        <p>Доброе утро, девочки! ☀️</p>
+        <p>Послушала вчерашние звонки по новым заявкам — 9 разговоров. Хорошее: всегда здороваетесь по скрипту и выясняете, чего хочет клиентка 👍</p>
+        <p>Чтобы больше заявок доходило до записи, сегодня обращаем внимание на две вещи:</p>
+        <p><b>1. Предлагаем два конкретных времени.</b><br>Вчера в 6 из 9 звонков спрашивали «когда вам удобно?» — и клиентка уходила думать. Лучше сразу:<br><i>«Есть завтра в 18:00 и в 19:00 — какое удобнее?»</i></p>
+        <p><b>2. Закрепляем запись оплатой.</b><br>В 5 звонках записали, но не предложили подтвердить. После записи говорим:<br><i>«Место в группе закрепляется после оплаты — давайте я пришлю ссылку?»</i></p>
+        <p>Сегодня пробуем так на каждом звонке 💪</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 08:15 подробный разбор владельцу -->
+<div class="slot">
+  <div class="when"><span class="time">08:15</span><span class="where">личка владельца</span></div>
+  <div class="what">
+    <h2>Подробно: кто какой звонок провёл</h2>
+    <p class="why">Команда видит общие выводы без имён, а владелец видит каждый звонок со ссылкой на запись.</p>
+    <div class="chat">
+      <div class="msg"><div class="from">ИИ-РОП</div>
+        <p>🎧 <b>Разбор звонков на запись · 25.10 — 9 звонков</b><br>Средняя оценка: <b>6,8</b> из 10</p>
+        <div class="tbl"><table>
+          <tr><th>Чаще всего упускают</th><th>звонков</th></tr>
+          <tr><td>2 варианта времени</td><td>6 из 9</td></tr>
+          <tr><td>подтверждение оплатой</td><td>5 из 9</td></tr>
+          <tr><td>прийти за 15 минут</td><td>3 из 9</td></tr>
+        </table></div>
+        <p class="sep">━━━━━━━━━━━━━━</p>
+        <p><b>3. 14:20 · Студия 2 · 4:12 · 5,7/10</b><br>Не сделано: 2 варианта времени, подтверждение оплатой<br>Хорошо: выяснила цель и опыт клиентки<br>Улучшить: сразу предложить два времени вместо «когда удобно»<br>Клиентка: хочет убрать зажимы в спине<br><a href="#">сделка</a> · <a href="#">запись</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 08:30 Бриф -->
+<div class="slot">
+  <div class="when"><span class="time">08:30</span><span class="where">личка владельца</span></div>
+  <div class="what">
+    <h2>На что обратить внимание</h2>
+    <p class="why">Три-четыре главных проблемы с цифрами. К каждой бот предлагает задачу: одна кнопка ставит её команде с дедлайном.</p>
+    <div class="chat">
+      <div class="msg"><div class="from">ИИ-РОП</div>
+        <p>👔 <b>На что обратить внимание · 26.10</b></p>
+        <p>1. <span class="tag r">🔴</span> <b>Студия 1 — заявки теряются</b><br>За 3 дня 14 заявок, записали 6 (43%, норма 75%).<br>8 не записаны, по 5 — ни одного исходящего звонка.<br>→ Задача: разобрать «Взят в работу» до 13:00</p>
+        <p>2. <span class="tag o">🟠</span> <b>Студия 2 — мало покупок после пробного</b><br>За неделю пришли 9, купили 4 (44%, норма 70%).<br>6 в «Отложенной продаже» ждут звонка.<br>→ Задача: 6 касаний по «Отложенной продаже» до 16:00</p>
+        <p>3. <span class="tag g">🟢</span> <b>Заявки берут быстро — обычно за 6 мин ✅</b></p>
+      </div>
+      <div class="btns row"><div class="btn">✅ Поставить задачи 1–2</div><div class="btn">✏️ Изменить</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Утро: план -->
+<div class="slot">
+  <div class="when"><span class="time">Утро</span><span class="where"><b>группа продаж</b></span></div>
+  <div class="what">
+    <h2>План на день каждой студии</h2>
+    <p class="why">Кто приходит на пробное, кому звонить по продлению, кого дожать из «Отложенной продажи». Длинные списки спрятаны под кнопки.</p>
+    <div class="chat">
+      <div class="msg"><div class="from">ИИ-РОП</div>
+        <p>☀️ <b>План на 26.10</b></p>
+        <p class="sep">━━━━━━━━━━━━━━</p>
+        <p><b>Админ · Студия 2</b></p>
+        <p>💰 Где брать продажи: 3 пробн. + 4 продл. → до <b>175 000 ₽</b> · ваш доход до <b>8 750 ₽</b></p>
+        <p>• Пробные: 11:00 Анна, 18:00 Мария, 19:00 Ольга</p>
+        <p>• 🔄 Продления сегодня: <b>4</b><br>• 🤝 Отложенная продажа — связаться сегодня: <b>3</b></p>
+        <p>• ⏳ Зависли на этапе: <b>5</b><br>&nbsp;&nbsp;&nbsp;взят в работу — 3 · пробное прошло, этап не сменён — 2</p>
+        <p>• Задачи на сегодня: 12</p>
+      </div>
+      <div class="btns"><div class="btn">🔄 Показать продления · Студия 2</div><div class="btn">🤝 Показать отложенную · Студия 2</div><div class="btn">⏳ Показать зависшие · Студия 2</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Днём: алерты -->
+<div class="slot">
+  <div class="when"><span class="time">Весь день</span><span class="where"><b>группа продаж</b></span></div>
+  <div class="what">
+    <h2>Подгоняет и радуется вместе с командой</h2>
+    <p class="why">Пишет, если заявку не взяли в работу или не перезвонили на пропущенный. Поздравляет с каждой продажей и продлением.</p>
+    <div class="chat">
+      <div class="msg"><div class="from">ИИ-РОП</div><p>⏰ <b>Заявка ждёт 12 мин</b> · Студия 1 · Таплинк<br><a href="#">Екатерина</a> — взять в работу</p></div>
+      <div class="msg"><div class="from">ИИ-РОП</div><p>📵 <b>Пропущенный звонок — не перезвонили 15+ мин</b><br>• 13:42 · +7 914 ••• 45 12 · <a href="#">Ирина</a> · Студия 2</p></div>
+      <div class="msg"><div class="from">ИИ-РОП</div><p>🎉 <b>Продажа!</b> Студия 1<br><a href="#">Светлана</a> · 12 500 ₽</p></div>
+      <div class="msg"><div class="from">ИИ-РОП</div><p>🔄 <b>Продление!</b> Студия 2<br><a href="#">Наталья</a> · 9 800 ₽</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- Задачи с дедлайном -->
+<div class="slot">
+  <div class="when"><span class="time">По задаче</span><span class="where"><b>группа продаж</b></span></div>
+  <div class="what">
+    <h2>Следит за задачами с дедлайном</h2>
+    <p class="why">Владелец ставит задачу одной командой или кнопкой из утренней сводки. Бот каждый час пишет, сколько сделано и успеваем ли к сроку.</p>
+    <div class="chat">
+      <div class="msg"><div class="from">ИИ-РОП</div><p>📋 <b>Задачи до 16:00</b></p>
+        <div class="tbl"><table>
+          <tr><th>Задача</th><th>сделано</th><th>темп</th></tr>
+          <tr><td>Разобрать «Взят в работу» · Студия 1</td><td>5 из 8</td><td class="ok">успеваем</td></tr>
+          <tr><td>Касания по отложенной · Студия 2</td><td>1 из 6</td><td class="mid">отстаём</td></tr>
+        </table></div>
+        <p>Осталось 2 часа. Начните с тех, кто ждёт дольше всех.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 15:30 Контроль -->
+<div class="slot">
+  <div class="when"><span class="time">15:30</span><span class="where"><b>группа продаж</b></span></div>
+  <div class="what">
+    <h2>Контроль: что из плана уже сделано</h2>
+    <div class="chat">
+      <div class="msg"><div class="from">ИИ-РОП</div>
+        <p>🕞 <b>Контроль · 15:30</b></p>
+        <p class="sep">━━━━━━━━━━━━━━</p>
+        <p><b>Админ · Студия 2</b><br>• 🔄 Продления — осталось 2 (закрыли 2)<br>• 🤝 Отложенная — ✅ всё сделано<br>• Вчерашние задачи — осталось 1</p>
+        <p class="sep">━━━━━━━━━━━━━━</p>
+        <p><b>Админ · Студия 1</b><br>• 🔄 Продления — ✅ всё сделано<br>• ⏳ Зависшие — осталось 3 (закрыли 1)</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 21:05 Итоги дня -->
+<div class="slot">
+  <div class="when"><span class="time">21:05</span><span class="where">группа «Отчёты»</span></div>
+  <div class="what">
+    <h2>Итоги дня с конверсией по студиям</h2>
+    <p class="why">Конверсия сравнивается с нормами студии: заявка → запись 75%, запись → приход 70%, приход → покупка 70%. Где ниже нормы, бот подсказывает, что доработать.</p>
+    <div class="chat">
+      <div class="msg"><div class="from">ИИ-РОП</div>
+        <p>📊 <b>Итоги дня · 26.10</b></p>
+        <div class="tbl"><table>
+          <tr><th></th><th>Заявки</th><th>→ запись</th><th>→ приход</th><th>→ покупка</th></tr>
+          <tr><td>Студия 1</td><td>8</td><td class="ok">6 · 75% ✅</td><td class="ok">4 · 67% 👍</td><td class="mid">2 · 50%</td></tr>
+          <tr><td>Студия 2</td><td>6</td><td class="mid">3 · 50%</td><td class="ok">3 · 100% ✅</td><td class="ok">2 · 67% 👍</td></tr>
+        </table></div>
+        <p>🔄 Продления: 5</p>
+        <p>📌 <b>Главное:</b> 1 заявка не взята в работу<br>• Таплинк · Студия 1 → <a href="#">открыть</a></p>
+        <p><b>Что доработать, чтобы поднять конверсию:</b><br>Студия 2, запись 50%: сразу предлагать 2 конкретных времени пробного.<br>Студия 1, покупка 50%: всегда использовать фразу дожима, например «Оформляем?»</p>
+        <p>💬 <b>Совет дня:</b> <i>Недозвон — ещё не отказ. Третья попытка в другое время часто и есть та самая.</i></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Понедельник: неделя + CAC -->
+<div class="slot">
+  <div class="when"><span class="time">Пн 08:00</span><span class="where">группа «Отчёты» и личка</span></div>
+  <div class="what">
+    <h2>Итоги недели и цена клиента по каналам</h2>
+    <p class="why">Владелец или партнёр вносит расходы на рекламу одной командой. Бот сам считает, во сколько обходится покупка из каждого канала.</p>
+    <div class="chat">
+      <div class="msg"><div class="from">ИИ-РОП</div>
+        <p>📅 <b>Неделя 19–25.10</b> · заявок 52 · записей 34 · пришли 22 · купили 13 · 🔄 продлений 21</p>
+        <div class="tbl"><table>
+          <tr><th>Канал</th><th>Расход</th><th>Заявки</th><th>Покупки</th><th>Цена покупки</th></tr>
+          <tr><td>ВК реклама</td><td>24 000 ₽</td><td>21</td><td>6</td><td class="ok">4 000 ₽</td></tr>
+          <tr><td>Яндекс</td><td>18 000 ₽</td><td>9</td><td>1</td><td class="low">18 000 ₽</td></tr>
+          <tr><td>Таплинк</td><td>—</td><td>14</td><td>4</td><td>бесплатно</td></tr>
+          <tr><td>Рекомендации</td><td>—</td><td>8</td><td>2</td><td>бесплатно</td></tr>
+        </table></div>
+        <p>⚠️ Яндекс: покупка в 4,5 раза дороже, чем из ВК.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ночь -->
+<div class="slot">
+  <div class="when"><span class="time">Ночью</span><span class="where">личка владельца — только при сбое</span></div>
+  <div class="what">
+    <h2>Сам проверяет, что всё работает</h2>
+    <p class="why">Каждую ночь бот делает резервную копию. Если пропала связь с amoCRM или что-то не работает дольше 30 минут, он пишет владельцу.</p>
+    <div class="chat">
+      <div class="msg"><div class="from">ИИ-РОП</div><p>⚠️ <b>Бот:</b> 35 минут нет связи с amoCRM. Проверяю каждую минуту и напишу, когда восстановится.</p></div>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<section class="summary">
+  <h2>Весь день в одной таблице</h2>
+  <div class="tbl"><table>
+    <tr><th>Когда</th><th>Что</th><th>Кому</th></tr>
+    <tr><td>08:15</td><td>Разбор вчерашних звонков по скрипту</td><td>команда — коротко, владелец — подробно</td></tr>
+    <tr><td>08:30</td><td>На что обратить внимание + готовые задачи</td><td>владелец</td></tr>
+    <tr><td>утро</td><td>План на день по студиям</td><td>команда</td></tr>
+    <tr><td>весь день</td><td>Невзятые заявки, пропущенные, продажи, продления</td><td>команда</td></tr>
+    <tr><td>каждый час</td><td>Темп по задачам с дедлайном</td><td>команда</td></tr>
+    <tr><td>15:30</td><td>Контроль плана</td><td>команда</td></tr>
+    <tr><td>21:05</td><td>Итоги дня и конверсия</td><td>«Отчёты»</td></tr>
+    <tr><td>пн 08:00</td><td>Итоги недели и цена клиента по каналам</td><td>«Отчёты», владелец</td></tr>
+    <tr><td>ночью</td><td>Резервная копия и самопроверка</td><td>владелец — только при сбое</td></tr>
+  </table></div>
+</section>
+
+<section class="summary">
+  <h2>Продления приходят из 1С сами</h2>
+  <p style="margin:0;max-width:62ch">Отдельно подключён мост amoCRM + 1С. Когда у клиентки до конца абонемента остаётся меньше 30 дней или меньше 15 занятий, мост сам создаёт в amoCRM новую сделку или задачу.</p>
+  <p style="margin:0;max-width:62ch">ИИ-РОП видит её как продление абонемента: ставит в план дня, напоминает о просроченных продлениях, проверяет в 15:30, сколько закрыли, и считает продления в итогах дня и недели. Администраторам не нужно вручную искать, у кого заканчивается абонемент.</p>
+</section>
+
+<footer>Работает с amoCRM, телефонией, подключённой к amoCRM, и мостом amoCRM + 1С для продлений. Записи звонков разбираются на серверах в России.</footer>
+</div>
+</body></html>
